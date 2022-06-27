@@ -21,4 +21,7 @@
     .error {
         @apply font-bold text-red-500 mt-2
     }
+    .layout {
+        @apply grid place-items-center;
+    }
 }

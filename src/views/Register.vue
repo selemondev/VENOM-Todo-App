@@ -1,32 +1,39 @@
 <script setup>
-import { reactive, computed } from "vue";
-import {required,email,sameAs,minLength,helpers} from "@vuelidate/validators";
-import useVuelidate from "@vuelidate/core";
-const formData = reactive({
-  username: "",
-  email: "",
-  password: "",
-  confirmPassword: "",
-});
-
-const rules = computed(() => {
-  return {
-  username:{ required: helpers.withMessage('Username is required', required), minLength: minLength(6)},
-  email:{ required: helpers.withMessage('Email is required', required), email},
-  password:{required: helpers.withMessage('Password is required', required), minLength:minLength(8)},
-  confirmPassword:{required: helpers.withMessage("Passwords do not Match", required), sameAs: sameAs(formData.password)},
-  }
-})
-
-const v$ = useVuelidate(rules, formData);
-
+import { useRouter } from "vue-router";
+import axios from "axios";
+const url = "http://localhost:5000/api/users/";
+const router = useRouter()
+const username = $ref("");
+const email = $ref("");
+const password = $ref("");
+const confirmPassword = $ref("");
+const loading = $ref(false);
 const handleSubmit = async () => {
-  const result = await v$.value.$validate();
-  if(result) {
-    alert("Form submitted")
-  } else {
-    alert("Form not submitted")
+  loading = true;
+try {
+    const response = await axios.post(url, {
+    username,
+    email,
+    password
+  });
+  if(response.data) {
+    localStorage.setItem("user", JSON.stringify(response.data))
+  };
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  const token = user?.token;
+  if(token) {
+    router.push("/login")
   }
+  setTimeout(() => {
+    username = ""
+    email = "",
+    password = ""
+  }, 1000);
+  loading = false;
+} catch(err) {
+  console.log(err.message)
+}
 }
 
 </script>
@@ -38,32 +45,32 @@ const handleSubmit = async () => {
                 <h2 class="font-bold text-purple-500 text-xl md:text-2xl">VENOM STACK</h2>
               </div>
               <div class='sm:pb-4 pb-3'>
-                <label htmlFor="User" class='label'>User</label>
-                <input type="text" placeholder='User' id='user' class="input" v-model="formData.username"/>
-                <p class='error' v-if="v$.username.$error">{{v$.username.$errors[0].$message}}</p>
+                <label htmlFor="User" class='label'>Username</label>
+                <input type="text" placeholder='User' id='user' class="input" v-model="username"/>
+                <!-- <p class='error' v-if="v$.username.$error">{{v$.username.$errors[0].$message}}</p> -->
               </div>
 
               <div class='sm:pb-4 pb-3'>
                 <label htmlFor="Email" class='label'>Email</label>
-                <input type="email" placeholder='Email' id='email' class="input" v-model="formData.email"/>
-                 <p class='error'  v-if="v$.email.$error">{{v$.email.$errors[0].$message}}</p>
+                <input type="email" placeholder='Email' id='email' class="input" v-model="email"/>
+                 <!-- <p class='error'  v-if="v$.email.$error">{{v$.email.$errors[0].$message}}</p> -->
               </div>
 
               <div class='sm:pb-4 pb-3'>
                 <label htmlFor="Password" class='label'>Password</label>
-                <input type="password" placeholder='Password' id="password" class="input" v-model="formData.password"/>
-                 <p class='error' v-if="v$.password.$error">{{v$.password.$errors[0].$message}}</p>
+                <input type="password" placeholder='Password' id="password" class="input" v-model="password"/>
+                 <!-- <p class='error' v-if="v$.password.$error">{{v$.password.$errors[0].$message}}</p> -->
               </div>
 
               <div class='sm:pb-4 pb-3'>
                 <label htmlFor="confirmPassword" class='label'>ConfirmPassword</label>
-                <input type="password" placeholder='ConfirmPassword' id="confirmPassword" class='input' v-model="formData.confirmPassword"/>
-               <p class='error' v-if="v$.confirmPassword.$error">{{v$.confirmPassword.$errors[0].$message}}</p>
+                <input type="password" placeholder='ConfirmPassword' id="confirmPassword" class='input' v-model="confirmPassword"/>
+               <!-- <p class='error' v-if="v$.confirmPassword.$error">{{v$.confirmPassword.$errors[0].$message}}</p> -->
               </div>
 
               <div>
                 <button type='submit' class='w-full bg-purple-500 hover:bg-purple-600 py-2 px-2 font-bold rounded-md text-white'>
-                  Sign Up
+                 {{ loading ? ' Signing Up...' : 'Sign Up'}}
                 </button>
               </div>
             </form>
